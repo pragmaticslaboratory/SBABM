@@ -15,7 +15,7 @@ public class Main {
         Loader.load(args.length > 0 ? args[0] : "");
 
         Console.info("MAIN: Configuration loaded -> {" + Configuration.toStringConfiguration() + " }");
-        Simulation s = new Sim ulation(BuyerFactory.createFromInput(), MarketFactory.createFromInput(),
+        Simulation s = new Simulation(BuyerFactory.createFromInput(), MarketFactory.createFromInput(),
                 Configuration.PERIODS);
 
         Instant start = Instant.now();
