@@ -14,7 +14,7 @@ public class Main {
         Loader.load(args.length > 0 ? args[0] : "");
 
         Console.info("MAIN: Configuration loaded -> {" + Configuration.toStringConfiguration() + " }");
-       /* Simulation s = new Simulation(BuyerFactory.createFromInput(), MarketFactory.createFromInput(),
+        Simulation s = new Simulation(BuyerFactory.createFromInput(), MarketFactory.createFromInput(),
                 Configuration.PERIODS);
 
         Instant start = Instant.now();
@@ -26,7 +26,7 @@ public class Main {
 
 
         Duration timeElapsed = Duration.between(start, end);
-        Console.info("Main: Simulation executions took " + timeElapsed.toMinutes() + " mins");*/
+        Console.info("Main: Simulation executions took " + timeElapsed.toMinutes() + " mins");
         Reporter.write();
         Console.end("Main: End.");
     }

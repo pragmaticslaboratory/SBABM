@@ -50,7 +50,7 @@ public class Reporter {
         addSheet(workbook, Loader.getMarketQuote());
         if (Configuration.SCENARIO != Configuration.DISABLED) addSheet(workbook, Loader.getScenario());
 
-        saveToS3();
+
         writeSalesPerMarket(workbook.createSheet("SalesPerMarket"), salesPerMarketData);
         writeSalesPerMarket(workbook.createSheet("SalesUniquePerMarket"), salesUniquePerMarketData);
         writeAgentDecision(workbook.createSheet("Results"));
@@ -60,6 +60,7 @@ public class Reporter {
 
         Console.info("Reporter: Writing to the disk");
         writeDisk(workbook);
+        saveToS3();
     }
 
     private static void writeScenarioChanges(XSSFSheet scenarios) {
@@ -292,28 +293,27 @@ public class Reporter {
     }
 
     private static void saveToS3() {
-        Console.info("Saving results in S3 Bucket");
-        Regions clientRegion = Regions.SA_EAST_1;
-        String region = "sa-east-1"; // región en la que se encuentra el bucket
-        String bucketName = "bucket-aws-sbabm"; //nombre del bucket
-        String fileObjKeyName ="examples/EXAMPLE.png"; // nombre del archivo al ser subido
-        //fileName lleva el nombre del archivo que quiere subir
-        String fileName = "";
-        String accessKey = ""; //acá va su clave de acceso
-        String secretKey = ""; //acá va su secretKey
-        try {
-            AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
-            AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-                    .withCredentials(new AWSStaticCredentialsProvider(credentials))
-                    .withRegion(clientRegion)
-                    .build();
-            File file = new File(fileName);
-            s3Client.putObject(bucketName, fileObjKeyName, file);
-            PutObjectRequest request = new PutObjectRequest(bucketName, fileObjKeyName, new File(fileName));
-            s3Client.putObject(request);
-            Console.info("Reporter: File saved");
-        } catch (SdkClientException e) {
-            e.printStackTrace();
+        if (Configuration.COMPRESSED_RESULTS) {
+            Console.info("Saving results (zip) in S3 Bucket");
+            File compressedFile = new File(Configuration.OUTPUT_DIRECTORY + ".zip");
+            Console.info("Reporter: Folder compressed in: " + compressedFile.getAbsolutePath());
+            Regions clientRegion = Regions.SA_EAST_1;
+            String bucketName = "bucket-aws-sbabm";
+            String fileObjKeyName ="compressed/" + compressedFile.getName();
+            String accessKey = ""; //poner accessKey
+            String secretKey = ""; //poner secretKey
+            try {
+                AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+                AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
+                        .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                        .withRegion(clientRegion)
+                        .build();
+                PutObjectRequest request = new PutObjectRequest(bucketName, fileObjKeyName, compressedFile);
+                s3Client.putObject(request);
+                Console.info("Reporter: File saved");
+            } catch (SdkClientException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
