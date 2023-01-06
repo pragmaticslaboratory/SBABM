@@ -4,7 +4,6 @@ import agent.Market;
 import agent.MarketFactory;
 import inputManager.Configuration;
 import inputManager.Loader;
-import inputManager.Scenarios;
 import utils.Console;
 import utils.Error;
 import org.apache.poi.ss.usermodel.Cell;
@@ -18,7 +17,6 @@ import scenarios.ScenarioFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -27,6 +25,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.amazonaws.SdkClientException;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 public class Reporter {
     private static final List<AgentDecisionData> agentDecisionData = new ArrayList<>();
     private static final List<DetailedAgentDecisionData> detailedAgentDecisionData = new ArrayList<>();
@@ -44,6 +50,7 @@ public class Reporter {
         addSheet(workbook, Loader.getMarketQuote());
         if (Configuration.SCENARIO != Configuration.DISABLED) addSheet(workbook, Loader.getScenario());
 
+        saveToS3();
         writeSalesPerMarket(workbook.createSheet("SalesPerMarket"), salesPerMarketData);
         writeSalesPerMarket(workbook.createSheet("SalesUniquePerMarket"), salesUniquePerMarketData);
         writeAgentDecision(workbook.createSheet("Results"));
@@ -281,6 +288,32 @@ public class Reporter {
             compressFolder();
         } catch (IOException ex) {
             Error.trigger("Input cannot be created: " + fullFileName + "\n.ERROR: " + ex, ex);
+        }
+    }
+
+    private static void saveToS3() {
+        Console.info("Saving results in S3 Bucket");
+        Regions clientRegion = Regions.SA_EAST_1;
+        String region = "sa-east-1"; // región en la que se encuentra el bucket
+        String bucketName = "bucket-aws-sbabm"; //nombre del bucket
+        String fileObjKeyName ="examples/EXAMPLE.png"; // nombre del archivo al ser subido
+        //fileName lleva el nombre del archivo que quiere subir
+        String fileName = "";
+        String accessKey = ""; //acá va su clave de acceso
+        String secretKey = ""; //acá va su secretKey
+        try {
+            AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+            AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
+                    .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                    .withRegion(clientRegion)
+                    .build();
+            File file = new File(fileName);
+            s3Client.putObject(bucketName, fileObjKeyName, file);
+            PutObjectRequest request = new PutObjectRequest(bucketName, fileObjKeyName, new File(fileName));
+            s3Client.putObject(request);
+            Console.info("Reporter: File saved");
+        } catch (SdkClientException e) {
+            e.printStackTrace();
         }
     }
 }
