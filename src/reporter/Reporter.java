@@ -295,13 +295,13 @@ public class Reporter {
     private static void saveToS3() {
         if (Configuration.COMPRESSED_RESULTS) {
             Console.info("Saving results (zip) in S3 Bucket");
-            File compressedFile = new File(Configuration.OUTPUT_DIRECTORY + ".zip");
+            File compressedFile = new File(inputManager.Configuration.OUTPUT_DIRECTORY + ".zip");
             Console.info("Reporter: Folder compressed in: " + compressedFile.getAbsolutePath());
             Regions clientRegion = Regions.SA_EAST_1;
             String bucketName = "bucket-aws-sbabm";
-            String fileObjKeyName ="compressed/" + compressedFile.getName();
-            String accessKey = ""; //poner accessKey
-            String secretKey = ""; //poner secretKey
+            String fileObjKeyName = compressedFile.getName();
+            String accessKey = "";
+            String secretKey = "";
             try {
                 AWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
                 AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
